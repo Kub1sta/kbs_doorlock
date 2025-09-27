@@ -2,7 +2,12 @@ import { camera } from "./classes/Camera";
 import { nuiComms } from "./classes/NuiComms";
 import { Raycast } from "./classes/Raycast";
 import { getEntityCoords } from "./util";
-import { DoorConfig, headingToRotation } from "../shared/config";
+import {
+	CHECK_INTERVAL,
+	headingToRotation,
+	MAX_LOAD_DISTANCE,
+} from "../shared/config";
+import { DoorConfig } from "@shared/types/util";
 
 declare function AddDoorToSystem(
 	doorHash: string,
@@ -65,8 +70,6 @@ interface ServerDoorData {
 const managedDoors = new Map<string, ServerDoorData>();
 const entityToDoorId = new Map<number, string>();
 const unloadedDoors = new Map<string, ServerDoorData>(); // Track doors that are too far to load
-const CHECK_INTERVAL = 2000;
-const MAX_LOAD_DISTANCE = 30.0;
 
 export const findEntityByDoorId = (doorId: string): number | null => {
 	for (const [entity, mappedDoorId] of entityToDoorId.entries()) {

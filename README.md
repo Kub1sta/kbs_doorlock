@@ -119,11 +119,11 @@ ensure kbs_doorlock
 
 ### Door Types
 
-| Type       | Description          | Configurable Speed | Max Distance    |
-| ---------- | -------------------- | ------------------ | --------------- |
-| **Single** | Standard single door | ❌                 | ✅ (0.5m - 50m) |
-| **Double** | Paired door system   | ❌                 | ✅ (0.5m - 50m) |
-| **Garage** | Large overhead doors | ✅ (0.1s - 10.0s)  | ✅ (0.5m - 50m) |
+| Type       | Description          | Configurable Speed        | Max Distance    |
+| ---------- | -------------------- | ------------------------- | --------------- |
+| **Single** | Standard single door | ❌                        | ✅ (0.5m - 50m) |
+| **Double** | Paired door system   | ❌                        | ✅ (0.5m - 50m) |
+| **Garage** | Large overhead doors | ✅ (x times normal speed) | ✅ (0.5m - 50m) |
 
 ### Performance Settings
 

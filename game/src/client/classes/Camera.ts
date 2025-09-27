@@ -1,8 +1,7 @@
 import { NUIComms } from "@shared/types/nui-comms";
-import { ObjEntries, Vec3 } from "@shared/types/util";
+import { DoorConfig, ObjEntries, Vec3 } from "@shared/types/util";
 import { degToRad } from "../util";
 import { nuiComms } from "./NuiComms";
-import { DoorConfig } from "../../shared/config";
 import {
 	toggleDoorByDoorId,
 	findEntityByDoorId,
