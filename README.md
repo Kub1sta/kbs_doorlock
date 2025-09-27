@@ -65,9 +65,7 @@ mv kbs_doorlock [KBS]/
 ### 2. Database Setup
 
 ```sql
--- Import the provided SQL file
 Just ensure the script sql will be automaticly imported
--- Or manually create the doors table with required columns
 ```
 
 ### 3. Build UI Components

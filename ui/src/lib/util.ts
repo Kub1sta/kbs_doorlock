@@ -1,5 +1,4 @@
 import { Vec3 } from "@shared/types/util";
-import { useEffect } from "react";
 
 export const transformCoords = (gtaCoords: Vec3) => {
 	const { x, y, z } = gtaCoords;
@@ -38,18 +37,3 @@ export const polar = (distance: number, angle: number) => ({
  * @param degrees
  */
 export const degToRad = (degrees: number) => (degrees * Math.PI) / 180;
-
-// NUI Event hook for React components
-export const useNuiEvent = (action: string, handler: (data: any) => void) => {
-	useEffect(() => {
-		const eventListener = (event: MessageEvent) => {
-			if (event.data.action && event.data.action === action) {
-				handler(event.data.data);
-			}
-		};
-
-		window.addEventListener("message", eventListener);
-
-		return () => window.removeEventListener("message", eventListener);
-	}, [action, handler]);
-};

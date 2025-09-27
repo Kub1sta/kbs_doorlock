@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import "./DoorSystemMenu.scss";
-import { useNuiEvent } from "../lib/util";
 import { fetchNui } from "../lib/NuiComms";
 import { Modal } from "./Modal";
 import { FaClipboardList, FaPlus } from "react-icons/fa6";
@@ -10,6 +9,8 @@ import { PiGarageFill } from "react-icons/pi";
 import { FaSearch, FaTrash } from "react-icons/fa";
 import { GiTeleport } from "react-icons/gi";
 import { IoArrowBackCircle } from "react-icons/io5";
+import { useNuiEvent } from "src/utils/useNuiEvent";
+import { NUIComms } from "@shared/types/nui-comms";
 
 interface Door {
 	id: string;
@@ -51,7 +52,7 @@ export function DoorSystemMenu() {
 	const [filterType, setFilterType] = useState<FilterType>("all");
 	const [filterByType, setFilterByType] = useState<DoorType | "all">("all");
 
-	useNuiEvent("openMenu", (data) => {
+	useNuiEvent<NUIComms.Event["openMenu"]>("openMenu", (data) => {
 		setIsOpen(true);
 		if (data.doors) {
 			setDoors(data.doors);
@@ -66,11 +67,11 @@ export function DoorSystemMenu() {
 		setIsOpen(false);
 	});
 
-	useNuiEvent("updateDoors", (data) => {
+	useNuiEvent<NUIComms.Event["updateDoors"]>("updateDoors", (data) => {
 		setDoors(data.doors || []);
 	});
 
-	useNuiEvent("doorAdded", (data) => {
+	useNuiEvent<NUIComms.Event["doorAdded"]>("doorAdded", (data) => {
 		if (data.door) {
 			setDoors((prev) => [...prev, data.door]);
 		}
