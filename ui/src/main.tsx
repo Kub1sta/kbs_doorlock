@@ -5,6 +5,7 @@ import { App } from ".";
 
 import "./style.scss";
 import { DoorSystemMenu } from "./components/DoorSystemMenu";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("No root element");
@@ -12,7 +13,9 @@ if (!rootEl) throw new Error("No root element");
 const root = ReactDOM.createRoot(rootEl);
 root.render(
 	<React.StrictMode>
-		<DoorSystemMenu />
+		<NotificationProvider>
+			<DoorSystemMenu />
+		</NotificationProvider>
 		<Canvas>
 			<App />
 		</Canvas>

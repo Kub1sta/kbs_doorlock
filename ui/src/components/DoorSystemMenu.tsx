@@ -9,8 +9,10 @@ import { PiGarageFill } from "react-icons/pi";
 import { FaSearch, FaTrash } from "react-icons/fa";
 import { GiTeleport } from "react-icons/gi";
 import { IoArrowBackCircle } from "react-icons/io5";
-import { useNuiEvent } from "src/utils/useNuiEvent";
 import { NUIComms } from "@shared/types/nui-comms";
+import { useNotifications } from "../contexts/NotificationContext";
+import { NotificationContainer } from "./NotificationContainer";
+import { useNuiEvent } from "../utils/useNuiEvent";
 
 interface Door {
 	id: string;
@@ -27,6 +29,7 @@ type ViewType = "list" | "add";
 type FilterType = "all" | "locked" | "unlocked";
 
 export function DoorSystemMenu() {
+	const { showError, showWarning, showSuccess } = useNotifications();
 	const [isOpen, setIsOpen] = useState(false);
 	const [doors, setDoors] = useState<Door[]>([]);
 	const [selectedDoor, setSelectedDoor] = useState<Door | null>(null);
@@ -74,6 +77,10 @@ export function DoorSystemMenu() {
 	useNuiEvent<NUIComms.Event["doorAdded"]>("doorAdded", (data) => {
 		if (data.door) {
 			setDoors((prev) => [...prev, data.door]);
+			showSuccess(
+				"Door Added",
+				`Successfully added \"${data.door.name}\" to the system.`
+			);
 		}
 	});
 
@@ -143,19 +150,24 @@ export function DoorSystemMenu() {
 
 	const handleStartSelection = async () => {
 		if (!newDoorName.trim()) {
-			alert("Please enter a door name before selecting.");
+			showError(
+				"Missing Door Name",
+				"Please enter a door name before selecting."
+			);
 			return;
 		}
 
 		if (newDoorMaxDistance < 0.5 || newDoorMaxDistance > 10) {
-			alert(
+			showWarning(
+				"Invalid Distance",
 				"Please enter a valid max distance between 0.5 and 10 meters."
 			);
 			return;
 		}
 
 		if (newDoorOpeningSpeed < 0.1 || newDoorOpeningSpeed > 10) {
-			alert(
+			showWarning(
+				"Invalid Opening Speed",
 				"Please enter a valid opening speed between 0.1 and 10.0 seconds."
 			);
 			return;
@@ -190,6 +202,11 @@ export function DoorSystemMenu() {
 		if (selectedDoor && selectedDoor.id === doorToDelete.id) {
 			setSelectedDoor(null);
 		}
+
+		showSuccess(
+			"Door Deleted",
+			`Successfully deleted "${doorToDelete.name}".`
+		);
 
 		setDeleteModalOpen(false);
 		setDoorToDelete(null);
@@ -271,6 +288,11 @@ export function DoorSystemMenu() {
 				editingOpeningSpeed
 			);
 		}
+
+		showSuccess(
+			"Changes Saved",
+			"Door settings have been updated successfully."
+		);
 
 		setHasUnsavedChanges(false);
 	};
@@ -1035,6 +1057,9 @@ export function DoorSystemMenu() {
 					</div>
 				</div>
 			</Modal>
+
+			{/* Notifications Container */}
+			<NotificationContainer />
 		</div>
 	);
 }

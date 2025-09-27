@@ -351,7 +351,7 @@ const addDoorToClientSystem = (doorData: ServerDoorData) => {
 			x: doorData.x,
 			y: doorData.y,
 			z: doorData.z,
-		}) > 50.0
+		}) > 30.0
 	) {
 		console.log(
 			`Door ${doorData.id} is too far from player, adding to unloaded doors`
