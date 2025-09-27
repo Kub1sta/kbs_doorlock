@@ -202,14 +202,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Credits
-
--   **Developer**: Kub1sta
--   **UI Library**: React 18
--   **Special Thanks**: FiveM Community
-
----
-
 ## 📞 Support
 
 -   **GitHub Issues**: [Create an Issue](https://github.com/Kub1sta/kbs_doorlock/issues)
@@ -219,6 +211,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Statistics
 
--   **Performance Impact**: Minimal (~0.02ms) Maximal (~0.1 - ~0.13) bcs of the Tree JS update position
+-   **Performance Impact**: Idle (~0.02ms) Maximal (~0.1 - ~0.13) bcs of the Tree JS update position
 -   **Database Queries**: Optimized with prepared statements
 -   **Supported Doors**: Unlimited per server
