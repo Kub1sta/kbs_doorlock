@@ -4,8 +4,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 ## 🎬 Showcase
 
--   **Video Demo**: https://youtu.be/ThgPESyyvRU
--   **Screenshots**: [https://imgur.com/a/qqhZix2](https://imgur.com/a/qqhZix2)
+-   **Screenshots**: [Showcase images](https://imgur.com/a/qqhZix2)
 
 ---
 
@@ -43,7 +42,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 ## 📋 Requirements
 
--   **oxmysql** -- [https://github.com/overextended/oxmysql](https://github.com/overextended/oxmysql)
+-   **oxmysql** -- [OxMySql resource](https://github.com/overextended/oxmysql)
 
 ---
 
@@ -206,8 +205,9 @@ exports['kbs_doorlock']:refreshEntityMappings()
 
 ## 🐛 Known Issues
 
--   Basicly when u use double doors the UI will show on the first selected doors
+-   Basicly when u use double doors the UI will show on one of the doors
 -   High resmon wile idle mode
+-   Doors when locked are sometimes stays open (as if the door in the game is open, but when aligned correctly, they will lock)
 
 ## 📄 License
 
