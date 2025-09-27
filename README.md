@@ -2,6 +2,9 @@
 
 A comprehensive and advanced door lock system for FiveM servers with modern UI, individual door configurations, and intelligent distance-based loading.
 
+-   Huge thanks to the [Gallejeans](https://github.com/gallejens) for the basic implementation of the TreeJS
+-   Default resource [Boilerplate for fivem](https://github.com/gallejens/fivem-threejs-wrapper)
+
 ## 🎬 Showcase
 
 -   **Screenshots**: [Showcase images](https://imgur.com/a/qqhZix2)
