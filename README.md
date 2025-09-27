@@ -31,8 +31,6 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 -   **Smart Loading System**: Doors only load when player is within range (50m)
 -   **Lazy Loading**: Distant doors are tracked but not loaded until needed
--   **Efficient Entity Management**: Automatic cleanup and refresh of door entities
--   **Optimized Distance Calculations**: Minimal performance impact
 
 ### 🔧 Advanced Configuration
 
