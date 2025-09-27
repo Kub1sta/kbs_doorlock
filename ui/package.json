@@ -1,0 +1,32 @@
+{
+	"name": "ui",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"watch": "tsc && vite build --watch"
+	},
+	"dependencies": {
+		"@react-three/drei": "^9.96.5",
+		"@react-three/fiber": "^8.15.15",
+		"@tailwindcss/vite": "^4.1.13",
+		"@uidotdev/usehooks": "^2.4.1",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"react-icons": "^5.5.0",
+		"tailwindcss": "^4.1.13",
+		"three": "^0.160.1"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.43",
+		"@types/react-dom": "^18.2.17",
+		"@types/three": "^0.160.0",
+		"@typescript-eslint/eslint-plugin": "^6.14.0",
+		"@typescript-eslint/parser": "^6.14.0",
+		"@vitejs/plugin-react-swc": "^3.5.0",
+		"typescript": "^5.2.2",
+		"vite": "^5.0.8"
+	}
+}

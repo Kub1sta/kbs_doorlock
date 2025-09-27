@@ -1,0 +1,455 @@
+const MySQL = exports.oxmysql;
+
+interface DoorData {
+	id: string;
+	entityId: string;
+	label: string;
+	doorType: "single" | "double" | "garage";
+	entityId2?: string;
+	x: number;
+	y: number;
+	z: number;
+	heading: number;
+	x2?: number;
+	y2?: number;
+	z2?: number;
+	heading2?: number;
+	isLocked: boolean;
+	maxDistance?: number;
+	openingSpeed?: number;
+}
+
+const serverDoors = new Map<string, DoorData>();
+
+const createDoorsTable = async () => {
+	try {
+		await MySQL.execute(`
+				CREATE TABLE IF NOT EXISTS kbs_doors (
+					id INT AUTO_INCREMENT PRIMARY KEY,
+					entityId VARCHAR(255) NOT NULL,
+					label VARCHAR(255) NOT NULL DEFAULT 'Unnamed Door',
+					door_type ENUM('single', 'double', 'garage') DEFAULT 'single',
+					entity_id_2 VARCHAR(255) NULL,
+					x FLOAT NOT NULL,
+					y FLOAT NOT NULL,
+					z FLOAT NOT NULL,
+					heading FLOAT NOT NULL,
+					x2 FLOAT NULL,
+					y2 FLOAT NULL,
+					z2 FLOAT NULL,
+					heading2 FLOAT NULL,
+					is_locked TINYINT(1) DEFAULT 0,
+					max_distance FLOAT DEFAULT 2.0,
+					opening_speed FLOAT DEFAULT 1.0,
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				)
+			`);
+	} catch (error) {
+		console.error("Failed to create kbs_doors table:", error);
+	}
+};
+const loadDoorsFromDatabase = async (): Promise<DoorData[]> => {
+	try {
+		const result = await MySQL.query_async(`
+				SELECT * FROM kbs_doors
+			`);
+
+		if (!result || result.length === 0) {
+			return [];
+		}
+
+		const doors = result.map((row: any) => ({
+			id: `door_${row.id}`,
+			entityId: row.entityId,
+			label: row.label || "Unnamed Door",
+			doorType: row.door_type || "single",
+			entityId2: row.entity_id_2 || undefined,
+			x: row.x,
+			y: row.y,
+			z: row.z,
+			heading: row.heading,
+			x2: row.x2 || undefined,
+			y2: row.y2 || undefined,
+			z2: row.z2 || undefined,
+			heading2: row.heading2 || undefined,
+			isLocked: row.is_locked,
+			maxDistance: row.max_distance || 2.0,
+			openingSpeed: row.opening_speed || 1.0,
+		}));
+		return doors;
+	} catch (error) {
+		console.error("Failed to load doors from database:", error);
+		return [];
+	}
+};
+const saveDoorToDatabase = async (
+	doorData: Omit<DoorData, "id">
+): Promise<{ success: boolean; id?: number }> => {
+	try {
+		const isDoubleDoor = doorData.doorType === "double";
+
+		const result = await MySQL.insert_async(
+			`INSERT INTO kbs_doors (entityId, label, door_type, entity_id_2, x, y, z, heading, x2, y2, z2, heading2, is_locked, max_distance, opening_speed)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			[
+				doorData.entityId,
+				doorData.label,
+				doorData.doorType,
+				doorData.entityId2 || null,
+				doorData.x,
+				doorData.y,
+				doorData.z,
+				doorData.heading,
+				doorData.x2 || null,
+				doorData.y2 || null,
+				doorData.z2 || null,
+				doorData.heading2 || null,
+				doorData.isLocked,
+				doorData.maxDistance || 2.0,
+				doorData.openingSpeed || 1.0,
+			]
+		);
+
+		if (result && typeof result === "object" && "insertId" in result) {
+			console.log(`Door saved with ID: ${result.insertId}`);
+			return { success: true, id: result.insertId };
+		} else if (typeof result === "number") {
+			console.log(`Door saved with ID: ${result}`);
+			return { success: true, id: result };
+		} else {
+			console.error(
+				"Unexpected result format from MySQL insert:",
+				result
+			);
+			return { success: false };
+		}
+	} catch (error) {
+		console.error("Failed to save door to database:", error);
+		return { success: false };
+	}
+};
+const updateDoorLockState = async (
+	doorId: string,
+	isLocked: boolean
+): Promise<boolean> => {
+	try {
+		const numericId = doorId.replace("door_", "");
+		await MySQL.execute(`UPDATE kbs_doors SET is_locked = ? WHERE id = ?`, [
+			isLocked,
+			numericId,
+		]);
+		return true;
+	} catch (error) {
+		console.error("Failed to update door lock state:", error);
+		return false;
+	}
+};
+
+const removeDoorFromDatabase = async (doorId: string): Promise<boolean> => {
+	try {
+		const numericId = doorId.replace("door_", "");
+		await MySQL.execute(`DELETE FROM kbs_doors WHERE id = ?`, [numericId]);
+		return true;
+	} catch (error) {
+		console.error("Failed to remove door from database:", error);
+		return false;
+	}
+};
+
+// Server only manages database - door natives are handled client-side
+const logDoorData = (doorData: DoorData) => {
+	console.log(`Door ${doorData.id} loaded`);
+};
+const toggleDoorLock = async (doorId: string): Promise<boolean> => {
+	const doorData = serverDoors.get(doorId);
+	if (!doorData) return false;
+
+	doorData.isLocked = !doorData.isLocked;
+	serverDoors.set(doorId, doorData);
+
+	const dbSuccess = await updateDoorLockState(doorId, doorData.isLocked);
+
+	if (dbSuccess) {
+		TriggerClientEvent(
+			"kbs_doorlock:doorStateChanged",
+			-1,
+			doorId,
+			doorData.isLocked
+		);
+		console.log(
+			`Door ${doorId} is now ${doorData.isLocked ? "LOCKED" : "UNLOCKED"}`
+		);
+		return true;
+	}
+
+	return false;
+};
+
+setImmediate(async () => {
+	await createDoorsTable();
+
+	const doors = await loadDoorsFromDatabase();
+
+	for (const doorData of doors) {
+		serverDoors.set(doorData.id, doorData);
+		logDoorData(doorData);
+	}
+
+	if (doors.length > 0) {
+		const doorArray = Array.from(serverDoors.values());
+		TriggerClientEvent("kbs_doorlock:receiveDoorData", -1, doorArray);
+	}
+});
+AddEventHandler("onResourceStart", (resourceName: string) => {
+	if (resourceName !== GetCurrentResourceName()) return;
+	console.log(`${resourceName} started, initializing doors...`);
+});
+
+AddEventHandler("playerJoining", (source: number) => {
+	setTimeout(() => {
+		const doorArray = Array.from(serverDoors.values());
+		if (doorArray.length > 0) {
+			TriggerClientEvent(
+				"kbs_doorlock:receiveDoorData",
+				source,
+				doorArray
+			);
+		}
+	}, 2000);
+});
+
+onNet("kbs_doorlock:requestDoorData", () => {
+	const src = globalThis.source;
+	const doorArray = Array.from(serverDoors.values());
+	TriggerClientEvent("kbs_doorlock:receiveDoorData", src, doorArray);
+});
+onNet(
+	"kbs_doorlock:addDoor",
+	async (
+		entityId: string,
+		x: number,
+		y: number,
+		z: number,
+		heading: number
+	) => {
+		const src = globalThis.source;
+		console.log(
+			`Adding door - Entity ID: ${entityId}, Coords: ${x}, ${y}, ${z}`
+		);
+
+		const doorDataToInsert = {
+			entityId: entityId,
+			label: "Unnamed Door",
+			doorType: "single" as const,
+			x: x,
+			y: y,
+			z: z,
+			heading: heading,
+			isLocked: false,
+			maxDistance: 2.0,
+			openingSpeed: 1.0,
+		};
+
+		const dbResult = await saveDoorToDatabase(doorDataToInsert);
+
+		if (dbResult.success && dbResult.id) {
+			const doorData: DoorData = {
+				id: `door_${dbResult.id}`,
+				...doorDataToInsert,
+			};
+
+			serverDoors.set(doorData.id, doorData);
+
+			logDoorData(doorData);
+
+			TriggerClientEvent("kbs_doorlock:doorAdded", -1, doorData);
+
+			TriggerClientEvent(
+				"kbs_doorlock:doorAddResult",
+				src,
+				true,
+				doorData.id
+			);
+
+			console.log(`Door ${doorData.id} added`);
+		} else {
+			console.error("Failed to save door to database");
+			TriggerClientEvent("kbs_doorlock:doorAddResult", src, false, null);
+		}
+	}
+);
+
+onNet("kbs_doorlock:toggleDoor", async (doorId: string) => {
+	const src = globalThis.source;
+	const success = await toggleDoorLock(doorId);
+
+	if (success) {
+		const doorData = serverDoors.get(doorId);
+		TriggerClientEvent(
+			"kbs_doorlock:doorToggled",
+			src,
+			doorId,
+			doorData?.isLocked || false
+		);
+	}
+});
+
+onNet("kbs_doorlock:removeDoor", async (doorId: string) => {
+	const src = globalThis.source;
+	const doorData = serverDoors.get(doorId);
+
+	if (doorData) {
+		const dbSuccess = await removeDoorFromDatabase(doorId);
+
+		if (dbSuccess) {
+			serverDoors.delete(doorId);
+
+			TriggerClientEvent("kbs_doorlock:doorRemoved", -1, doorId);
+
+			TriggerClientEvent("kbs_doorlock:doorRemoveResult", src, true);
+			console.log(`Door ${doorId} removed`);
+		} else {
+			TriggerClientEvent("kbs_doorlock:doorRemoveResult", src, false);
+		}
+	} else {
+		TriggerClientEvent("kbs_doorlock:doorRemoveResult", src, false);
+	}
+});
+
+onNet(
+	"kbs_doorlock:addDoorWithDetails",
+	async (entityData: {
+		entityId: string;
+		name: string;
+		type: string;
+		maxDistance: number;
+		openingSpeed: number;
+		x: number;
+		y: number;
+		z: number;
+		heading: number;
+		entityId2?: string;
+		x2?: number;
+		y2?: number;
+		z2?: number;
+		heading2?: number;
+	}) => {
+		const src = globalThis.source;
+		console.log(
+			`Adding door with details - Name: ${entityData.name}, Type: ${entityData.type}, Distance: ${entityData.maxDistance}`
+		);
+
+		const doorDataToInsert = {
+			entityId: entityData.entityId,
+			label: entityData.name,
+			doorType: entityData.type as "single" | "double" | "garage",
+			entityId2: entityData.entityId2,
+			x: entityData.x,
+			y: entityData.y,
+			z: entityData.z,
+			heading: entityData.heading,
+			x2: entityData.x2,
+			y2: entityData.y2,
+			z2: entityData.z2,
+			heading2: entityData.heading2,
+			isLocked: false,
+			maxDistance: entityData.maxDistance,
+			openingSpeed: entityData.openingSpeed,
+		};
+
+		const dbResult = await saveDoorToDatabase(doorDataToInsert);
+
+		if (dbResult.success && dbResult.id) {
+			const doorData: DoorData = {
+				id: `door_${dbResult.id}`,
+				...doorDataToInsert,
+			};
+
+			serverDoors.set(doorData.id, doorData);
+
+			logDoorData(doorData);
+
+			TriggerClientEvent("kbs_doorlock:doorAdded", -1, doorData);
+
+			TriggerClientEvent(
+				"kbs_doorlock:doorAddResult",
+				src,
+				true,
+				doorData.id
+			);
+
+			console.log(`Door "${entityData.name}" (${doorData.id}) added`);
+		} else {
+			console.error("Failed to save door to database");
+			TriggerClientEvent("kbs_doorlock:doorAddResult", src, false, null);
+		}
+	}
+);
+
+onNet(
+	"kbs_doorlock:updateDoorMaxDistance",
+	async (doorId: string, maxDistance: number) => {
+		const src = globalThis.source;
+		const doorData = serverDoors.get(doorId);
+
+		if (doorData) {
+			doorData.maxDistance = maxDistance;
+			serverDoors.set(doorId, doorData);
+
+			try {
+				const numericId = doorId.replace("door_", "");
+				await MySQL.execute(
+					`UPDATE kbs_doors SET max_distance = ? WHERE id = ?`,
+					[maxDistance, numericId]
+				);
+
+				TriggerClientEvent(
+					"kbs_doorlock:doorMaxDistanceUpdated",
+					-1,
+					doorId,
+					maxDistance
+				);
+
+				console.log(
+					`Door ${doorId} max distance updated to ${maxDistance}m`
+				);
+			} catch (error) {
+				console.error("Failed to update door max distance:", error);
+			}
+		}
+	}
+);
+
+onNet(
+	"kbs_doorlock:updateDoorOpeningSpeed",
+	async (doorId: string, openingSpeed: number) => {
+		const src = globalThis.source;
+		const doorData = serverDoors.get(doorId);
+
+		if (doorData) {
+			doorData.openingSpeed = openingSpeed;
+			serverDoors.set(doorId, doorData);
+
+			try {
+				const numericId = doorId.replace("door_", "");
+				await MySQL.execute(
+					`UPDATE kbs_doors SET opening_speed = ? WHERE id = ?`,
+					[openingSpeed, numericId]
+				);
+
+				TriggerClientEvent(
+					"kbs_doorlock:doorOpeningSpeedUpdated",
+					-1,
+					doorId,
+					openingSpeed
+				);
+
+				console.log(
+					`Door ${doorId} opening speed updated to ${openingSpeed}s`
+				);
+			} catch (error) {
+				console.error("Failed to update door opening speed:", error);
+			}
+		}
+	}
+);

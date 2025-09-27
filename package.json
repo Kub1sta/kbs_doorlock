@@ -1,0 +1,15 @@
+{
+  "name": "fivem-threejs-wrapper",
+  "version": "1.0.0",
+  "author": "gallejens",
+  "license": "ISC",
+  "scripts": {
+    "build": "cd game && pnpm build && cd ../ui && pnpm build",
+    "watch": "cd game && pnpm watch",
+    "fullinstall": "cd game && pnpm i && cd ../ui && pnpm i"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.5.3",
+    "typescript": "5.3.3"
+  }
+}
