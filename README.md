@@ -7,7 +7,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 ## 🎬 Showcase
 
--   **Screenshots**: [Showcase images](https://imgur.com/a/qqhZix2)
+-   **Screenshots**: [Showcase images](https://imgur.com/a/RbFRxiL)
 
 ---
 
