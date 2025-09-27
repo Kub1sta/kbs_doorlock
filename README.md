@@ -45,7 +45,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 ## 📋 Requirements
 
--   **oxmysql** -- [OxMySql resource](https://github.com/overextended/oxmysql)
+-   **oxmysql** [OxMySql resource](https://github.com/overextended/oxmysql)
 
 ---
 
