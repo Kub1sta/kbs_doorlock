@@ -127,10 +127,10 @@ ensure kbs_doorlock
 ### Performance Settings
 
 ```js
-// Distance for loading door entities (in addDoorToClientSystem)
+// Distance for loading door entities (Can be changed in config)
 const MAX_LOAD_DISTANCE = 50.0; // meters
 
-// Check interval for unloaded doors
+// Check interval for unloaded doors (Can be changed in config)
 const CHECK_INTERVAL = 2000; // milliseconds
 ```
 
@@ -164,22 +164,6 @@ CREATE TABLE `kbs_doors` (
 
 ---
 
-## 🔌 API Reference
-
-### Client Exports
-
-```lua
--- Toggle a door by ID
-exports['kbs_doorlock']:toggleDoorByDoorId(doorId)
-
--- Find entity by door ID
-local entity = exports['kbs_doorlock']:findEntityByDoorId(doorId)
-
--- Refresh entity mappings
-exports['kbs_doorlock']:refreshEntityMappings()
-
-```
-
 ## 🛠️ Development
 
 ### Tech Stack
@@ -193,7 +177,7 @@ exports['kbs_doorlock']:refreshEntityMappings()
 
 ## 📝 Changelog
 
-### Version 1.0.0
+### Version 0.8.0
 
 -   Initial release with basic door lock functionality
 -   Support for single, double, and garage doors
@@ -206,7 +190,7 @@ exports['kbs_doorlock']:refreshEntityMappings()
 ## 🐛 Known Issues
 
 -   Basicly when u use double doors the UI will show on one of the doors
--   High resmon wile idle mode
+-   High resmon while idle mode
 -   Doors when locked are sometimes stays open (as if the door in the game is open, but when aligned correctly, they will lock)
 
 ## 📄 License
