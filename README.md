@@ -43,8 +43,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 
 ## 📋 Requirements
 
--   **ESX Legacy** (or compatible framework)
--   **MySQL Database**
+-   **oxmysql** -- [https://github.com/overextended/oxmysql](https://github.com/overextended/oxmysql)
 -   **Node.js** (for UI compilation)
 -   **FiveM Server** with client/server scripts support
 
