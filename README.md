@@ -66,7 +66,7 @@ mv kbs_doorlock [KBS]/
 
 ```sql
 -- Import the provided SQL file
-source kbs_doorlock.sql
+Just ensure the script sql will be automaticly imported
 -- Or manually create the doors table with required columns
 ```
 
