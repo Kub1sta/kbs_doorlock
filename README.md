@@ -5,7 +5,7 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 ## 🎬 Showcase
 
 -   **Video Demo**: https://youtu.be/ThgPESyyvRU
--   **Screenshots**: https://imgur.com/a/qqhZix2
+-   **Screenshots**: [https://imgur.com/a/qqhZix2](https://imgur.com/a/qqhZix2)
 
 ---
 
@@ -44,8 +44,6 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 ## 📋 Requirements
 
 -   **oxmysql** -- [https://github.com/overextended/oxmysql](https://github.com/overextended/oxmysql)
--   **Node.js** (for UI compilation)
--   **FiveM Server** with client/server scripts support
 
 ---
 
@@ -57,7 +55,6 @@ A comprehensive and advanced door lock system for FiveM servers with modern UI, 
 # Clone the repository or download the ZIP
 git clone https://github.com/Kub1sta/kbs_doorlock.git
 # Move to your resources folder
-mv kbs_doorlock [KBS]/
 ```
 
 ### 2. Database Setup
@@ -66,23 +63,14 @@ mv kbs_doorlock [KBS]/
 Just ensure the script sql will be automaticly imported
 ```
 
-### 3. Build UI Components
+### 3. Build both scripts and UI
 
 ```bash
-cd kbs_doorlock/ui
-npm install
-npm run build
+cd kbs_doorlock
+npm run fullinstall
 ```
 
-### 4. Build Game Scripts
-
-```bash
-cd kbs_doorlock/game
-npm install
-npm run build
-```
-
-### 5. Server Configuration
+### 4. Server Configuration
 
 ```lua
 -- Add to server.cfg
@@ -107,7 +95,7 @@ ensure kbs_doorlock
     - **Door Type**: Single, Double, or Garage
     - **Name/Label**: Custom door name
     - **Max Distance**: Interaction range (0.5m - 50m)
-    - **Opening Speed**: For garage doors only (0.1s - 10.0s)
+    - **Opening Speed**: For garage doors only (Using base fivem opening speed ratio so it is x normal opening rate)
 4. Click "Select Door in Game"
 5. Aim at the door entity and press ENTER to select
 6. For double doors, select both door entities
@@ -139,12 +127,12 @@ ensure kbs_doorlock
 
 ### Performance Settings
 
-```lua
--- Distance for loading door entities (in addDoorToClientSystem)
-local MAX_LOAD_DISTANCE = 50.0 -- meters
+```js
+// Distance for loading door entities (in addDoorToClientSystem)
+const MAX_LOAD_DISTANCE = 50.0; // meters
 
--- Check interval for unloaded doors
-local CHECK_INTERVAL = 2000 -- milliseconds
+// Check interval for unloaded doors
+const CHECK_INTERVAL = 2000; // milliseconds
 ```
 
 ---
@@ -152,26 +140,27 @@ local CHECK_INTERVAL = 2000 -- milliseconds
 ## 🗃️ Database Schema
 
 ```sql
-CREATE TABLE `doors` (
-    `id` varchar(50) NOT NULL PRIMARY KEY,
-    `label` varchar(255) NOT NULL,
-    `doorType` enum('single', 'double', 'garage') NOT NULL DEFAULT 'single',
-    `entityId` varchar(255) NOT NULL,
-    `entityId2` varchar(255) NULL,
-    `x` float NOT NULL,
-    `y` float NOT NULL,
-    `z` float NOT NULL,
-    `heading` float NOT NULL,
-    `x2` float NULL,
-    `y2` float NULL,
-    `z2` float NULL,
-    `heading2` float NULL,
-    `isLocked` boolean NOT NULL DEFAULT true,
-    `maxDistance` float DEFAULT 2.0,
-    `openingSpeed` float DEFAULT 1.0,
-    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CREATE TABLE `kbs_doors` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`entityId` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_uca1400_ai_ci',
+	`label` VARCHAR(255) NOT NULL DEFAULT 'Unnamed Door' COLLATE 'utf8mb3_uca1400_ai_ci',
+	`door_type` ENUM('single','double','garage') NULL DEFAULT 'single' COLLATE 'utf8mb3_uca1400_ai_ci',
+	`entity_id_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_uca1400_ai_ci',
+	`x` FLOAT NOT NULL,
+	`y` FLOAT NOT NULL,
+	`z` FLOAT NOT NULL,
+	`heading` FLOAT NOT NULL,
+	`x2` FLOAT NULL DEFAULT NULL,
+	`y2` FLOAT NULL DEFAULT NULL,
+	`z2` FLOAT NULL DEFAULT NULL,
+	`heading2` FLOAT NULL DEFAULT NULL,
+	`is_locked` TINYINT(1) NULL DEFAULT '0',
+	`max_distance` FLOAT NULL DEFAULT '2',
+	`opening_speed` FLOAT NULL DEFAULT '1',
+	`created_at` TIMESTAMP NULL DEFAULT current_timestamp(),
+	PRIMARY KEY (`id`) USING BTREE
 );
+
 ```
 
 ---
@@ -190,65 +179,9 @@ local entity = exports['kbs_doorlock']:findEntityByDoorId(doorId)
 -- Refresh entity mappings
 exports['kbs_doorlock']:refreshEntityMappings()
 
--- Check for unloaded doors that can now be loaded
-exports['kbs_doorlock']:checkUnloadedDoors()
 ```
-
-### Server Events
-
-```lua
--- Request door data from server
-TriggerServerEvent('kbs_doorlock:requestDoorData')
-
--- Add door with details
-TriggerServerEvent('kbs_doorlock:addDoorWithDetails', doorData)
-
--- Toggle door state
-TriggerServerEvent('kbs_doorlock:toggleDoor', doorId)
-
--- Update door max distance
-TriggerServerEvent('kbs_doorlock:updateDoorMaxDistance', doorId, maxDistance)
-
--- Update door opening speed
-TriggerServerEvent('kbs_doorlock:updateDoorOpeningSpeed', doorId, openingSpeed)
-
--- Remove door
-TriggerServerEvent('kbs_doorlock:removeDoor', doorId)
-```
-
----
 
 ## 🛠️ Development
-
-### Project Structure
-
-```
-kbs_doorlock/
-├── game/                  # Game scripts (TypeScript)
-│   ├── src/
-│   │   ├── client/        # Client-side logic
-│   │   ├── server/        # Server-side logic
-│   │   └── shared/        # Shared utilities
-│   └── package.json
-├── ui/                    # React UI components
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   └── lib/           # Utility functions
-│   └── package.json
-├── shared/                # Shared type definitions
-├── fxmanifest.lua         # FiveM resource manifest
-└── README.md
-```
-
-### Building for Development
-
-```bash
-# Watch mode for game scripts
-cd game && npm run dev
-
-# Watch mode for UI
-cd ui && npm run dev
-```
 
 ### Tech Stack
 
@@ -273,19 +206,8 @@ cd ui && npm run dev
 
 ## 🐛 Known Issues
 
--   _None currently reported_
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
+-   Basicly when u use double doors the UI will show on the first selected doors
+-   High resmon wile idle mode
 
 ## 📄 License
 
@@ -296,7 +218,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Credits
 
 -   **Developer**: Kub1sta
--   **Framework**: ESX Legacy
 -   **UI Library**: React 18
 -   **Special Thanks**: FiveM Community
 
@@ -305,14 +226,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 -   **GitHub Issues**: [Create an Issue](https://github.com/Kub1sta/kbs_doorlock/issues)
--   **Discord**: _[Add your Discord here]_
--   **Documentation**: _[Add documentation link if available]_
+-   **Discord**: kubista\_ (ID: 459699240395079680)
 
 ---
 
 ## 📊 Statistics
 
--   **Performance Impact**: Minimal (~0.01ms)
--   **Memory Usage**: Low (~2MB)
+-   **Performance Impact**: Minimal (~0.02ms) Maximal (~0.1 - ~0.13) bcs of the Tree JS update position
 -   **Database Queries**: Optimized with prepared statements
 -   **Supported Doors**: Unlimited per server

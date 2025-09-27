@@ -346,7 +346,7 @@ class Camera {
 		refreshEntityMappings();
 
 		// this.isInFarMode = false;
-		this.thread = setInterval(this.onFrame, 4); // Full speed when near
+		this.thread = setInterval(this.onFrame, 10); // Full speed when near
 	}
 
 	private onFrame = () => {

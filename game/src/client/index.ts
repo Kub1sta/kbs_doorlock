@@ -65,6 +65,8 @@ interface ServerDoorData {
 const managedDoors = new Map<string, ServerDoorData>();
 const entityToDoorId = new Map<number, string>();
 const unloadedDoors = new Map<string, ServerDoorData>(); // Track doors that are too far to load
+const CHECK_INTERVAL = 2000;
+const MAX_LOAD_DISTANCE = 30.0;
 
 export const findEntityByDoorId = (doorId: string): number | null => {
 	for (const [entity, mappedDoorId] of entityToDoorId.entries()) {
@@ -119,14 +121,14 @@ setImmediate(async () => {
 		if (managedDoors.size === 0) {
 			TriggerServerEvent("kbs_doorlock:requestDoorData");
 		}
-	}, 5000);
+	}, 3000);
 
 	// Start a timer to periodically check for unloaded doors that can now be loaded
 	setInterval(() => {
 		if (unloadedDoors.size > 0) {
 			checkUnloadedDoors();
 		}
-	}, 2000); // Check every 2 seconds
+	}, CHECK_INTERVAL);
 });
 
 const serverDoorToConfig = (doorData: ServerDoorData): DoorConfig => {
@@ -351,7 +353,7 @@ const addDoorToClientSystem = (doorData: ServerDoorData) => {
 			x: doorData.x,
 			y: doorData.y,
 			z: doorData.z,
-		}) > 30.0
+		}) > MAX_LOAD_DISTANCE
 	) {
 		console.log(
 			`Door ${doorData.id} is too far from player, adding to unloaded doors`
@@ -684,13 +686,31 @@ RegisterNuiCallback(
 
 		const performSelection = () =>
 			new Promise<boolean>((resolve) => {
+				let lastOutlinedEntity: number | null = null;
 				const thread = setInterval(() => {
 					const raycast = new Raycast();
 					const plyCoords = getEntityCoords(PlayerPedId());
 
 					if (raycast.hit && raycast.entity && raycast.coords) {
-						SetEntityDrawOutline(raycast.entity, true);
-						SetEntityDrawOutlineColor(255, 165, 0, 255);
+						// Clear outline from previous entity if different
+						if (
+							lastOutlinedEntity &&
+							lastOutlinedEntity !== raycast.entity &&
+							DoesEntityExist(lastOutlinedEntity)
+						) {
+							SetEntityDrawOutline(lastOutlinedEntity, false);
+						}
+
+						// Ensure entity exists and is valid before applying outline
+						if (DoesEntityExist(raycast.entity)) {
+							// Set outline color first, then enable outline for better reliability
+							SetEntityDrawOutlineColor(255, 0, 0, 255); // Red outline
+							SetEntityDrawOutline(raycast.entity, true);
+
+							// Force shader reload for better outline visibility
+							SetEntityDrawOutlineShader(1);
+							lastOutlinedEntity = raycast.entity;
+						}
 
 						DrawLine(
 							plyCoords.x,
@@ -801,6 +821,15 @@ RegisterNuiCallback(
 							}
 						}
 					} else {
+						// Clear outline from previous entity when not targeting anything
+						if (
+							lastOutlinedEntity &&
+							DoesEntityExist(lastOutlinedEntity)
+						) {
+							SetEntityDrawOutline(lastOutlinedEntity, false);
+							lastOutlinedEntity = null;
+						}
+
 						let helpText = "";
 						if (isDoubleDoor) {
 							helpText = `Double Door Selection (${currentSelection}/${maxSelections})~n~Aim at door entities and press ENTER to select`;
