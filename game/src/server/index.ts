@@ -352,7 +352,7 @@ onNet(
 			y2: entityData.y2,
 			z2: entityData.z2,
 			heading2: entityData.heading2,
-			isLocked: false,
+			isLocked: true,
 			maxDistance: entityData.maxDistance,
 			openingSpeed: entityData.openingSpeed,
 		};

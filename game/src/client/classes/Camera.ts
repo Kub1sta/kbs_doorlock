@@ -312,55 +312,42 @@ class Camera {
 		return false;
 	}
 
-	// Lightweight loop for when player is far from doors
 	private startFarModeLoop() {
 		if (this.thread) {
 			clearInterval(this.thread);
 		}
 
 		this.thread = setInterval(() => {
-			const currentPos = this.getPlayerPosition();
-
-			// Don't switch modes if no doors are loaded yet (wait for server data)
 			if (allDoors.length === 0) {
 				return;
 			}
 
-			// Check if player is within far distance
 			if (this.isWithinFarDistance()) {
-				// Player is getting closer, switch to full loop
 				this.startNearModeLoop();
 			}
-			// Stay in far mode if player is beyond FAR_DISTANCE
-		}, 1000);
+		}, 2000);
 	}
 
-	// Full featured loop for when player is near doors
 	private startNearModeLoop() {
 		if (this.thread) {
 			clearInterval(this.thread);
 		}
 
-		// Refresh entity mappings when entering near mode to ensure we can find all doors
 		refreshEntityMappings();
 
-		// this.isInFarMode = false;
-		this.thread = setInterval(this.onFrame, 10); // Full speed when near
+		this.thread = setInterval(this.onFrame, 16);
 	}
 
 	private onFrame = () => {
-		// Check if player is near any door location
 		const nearbyDoor = this.isNearAnyDoor();
 		if (nearbyDoor === null) {
-			// Player is not near any door, send update to hide UI if we had a door before
 			if (this.nerbyDoorLocation !== null) {
-				// Send update to hide UI
 				nuiComms.send("update", {
 					camera: {
 						position: this.getCameraPosition(),
 						rotation: this.getCameraRotation(),
 					},
-					nerbyDoorLocation: null, // This tells UI to hide
+					nerbyDoorLocation: null,
 					isOpened: false,
 					rotation: { x: 0, y: 0, z: 0 },
 				});
@@ -370,26 +357,18 @@ class Camera {
 			this.currentDoorId = null;
 			this.stopKeyListener();
 
-			// Check if player is far from all doors
 			if (!this.isWithinFarDistance()) {
 				this.startFarModeLoop();
 			}
 			return;
 		}
 
-		// Update current door info
 		this.nerbyDoorLocation = {
 			x: nearbyDoor.x,
 			y: nearbyDoor.y,
 			z: nearbyDoor.z,
 		};
 		this.currentDoorId = nearbyDoor.id;
-
-		// console.log(
-		// 	`Camera: Found nearby door ${
-		// 		nearbyDoor.id
-		// 	} at distance ${nearbyDoor.closestDistance.toFixed(2)}m`
-		// );
 
 		const newMetadata: typeof this.metadata = {
 			fov: GetFinalRenderedCamFov(),
@@ -415,12 +394,7 @@ class Camera {
 		};
 
 		nuiComms.send("update", updateData);
-		// console.log(
-		// 	`Camera: Sent UI update for door ${nearbyDoor.id}:`,
-		// 	updateData.nerbyDoorLocation
-		// );
 
-		// Start key listening if not already active
 		if (keyTickId === null) {
 			this.startKeyListener();
 		}
@@ -429,12 +403,10 @@ class Camera {
 	};
 
 	private startKeyListener() {
-		if (keyTickId !== null) return; // Already listening
+		if (keyTickId !== null) return;
 
 		keyTickId = setTick(() => {
-			// Check if player is still near a door
 			if (this.isNearAnyDoor() === null) {
-				// Player moved away, stop listening
 				this.stopKeyListener();
 				return;
 			}

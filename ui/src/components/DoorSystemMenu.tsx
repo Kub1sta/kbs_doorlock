@@ -331,19 +331,6 @@ export function DoorSystemMenu() {
 		}
 	};
 
-	// if (!isOpen) {
-	// 	return (
-	// 		<div className='door-system-toggle'>
-	// 			<button
-	// 				onClick={() => setIsOpen(true)}
-	// 				className='toggle-button'
-	// 			>
-	// 				🔒 Door System
-	// 			</button>
-	// 		</div>
-	// 	);
-	// }
-
 	if (!isOpen) {
 		return null;
 	}

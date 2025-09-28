@@ -38,15 +38,7 @@ declare function DoorSystemSetAutomaticRate(
 	forceUpdate: boolean
 ): void;
 declare function DoorSystemGetDoorState(doorHash: string): number;
-declare function NetworkDoesEntityExistWithNetworkId(
-	networkId: number
-): boolean;
-declare function NetworkGetEntityFromNetworkId(networkId: number): number;
-declare function NetworkGetNetworkIdFromEntity(entity: number): number;
 declare function DoesEntityExist(entity: number): boolean;
-declare function NetworkGetEntityIsNetworked(entity: number): boolean;
-declare function NetworkRegisterEntityAsNetworked(entity: number): boolean;
-declare function NetworkGetEntityOwner(entity: number): number;
 
 interface ServerDoorData {
 	id: string;
@@ -180,7 +172,6 @@ const findDoorEntity = (doorData: ServerDoorData): number | null => {
 	const expectedModelHash = parseInt(parts[0]);
 	const entities = GetGamePool("CObject");
 
-	// First try to find entity using model hash and proximity
 	for (const entity of entities) {
 		if (GetEntityModel(entity) === expectedModelHash) {
 			const [x, y, z] = GetEntityCoords(entity, false);
@@ -202,7 +193,7 @@ const findDoorEntity = (doorData: ServerDoorData): number | null => {
 onNet("kbs_doorlock:receiveDoorData", (doors: ServerDoorData[]) => {
 	managedDoors.clear();
 	entityToDoorId.clear();
-	unloadedDoors.clear(); // Clear unloaded doors as well
+	unloadedDoors.clear();
 	camera.clearAllDoors();
 
 	for (const doorData of doors) {
@@ -361,12 +352,11 @@ const addDoorToClientSystem = (doorData: ServerDoorData) => {
 		console.log(
 			`Door ${doorData.id} is too far from player, adding to unloaded doors`
 		);
-		// Store in unloaded doors instead of skipping completely
+
 		unloadedDoors.set(doorData.id, doorData);
 		return;
 	}
 
-	// Remove from unloaded doors if it was there
 	unloadedDoors.delete(doorData.id);
 
 	managedDoors.set(doorData.id, doorData);
@@ -440,14 +430,14 @@ const addDoorToClientSystem = (doorData: ServerDoorData) => {
 
 			DoorSystemSetDoorState(
 				doorData.id + "_1",
-				doorData.isLocked ? 1 : 0,
+				doorData.isLocked ? 4 : 5,
 				false,
 				false
 			);
 
 			DoorSystemSetDoorState(
 				doorData.id + "_2",
-				doorData.isLocked ? 1 : 0,
+				doorData.isLocked ? 4 : 5,
 				false,
 				false
 			);
@@ -495,7 +485,7 @@ const addDoorToClientSystem = (doorData: ServerDoorData) => {
 
 			DoorSystemSetDoorState(
 				doorData.id,
-				doorData.isLocked ? 1 : 0,
+				doorData.isLocked ? 4 : 5,
 				false,
 				false
 			);
@@ -695,7 +685,6 @@ RegisterNuiCallback(
 					const plyCoords = getEntityCoords(PlayerPedId());
 
 					if (raycast.hit && raycast.entity && raycast.coords) {
-						// Clear outline from previous entity if different
 						if (
 							lastOutlinedEntity &&
 							lastOutlinedEntity !== raycast.entity &&
@@ -704,13 +693,10 @@ RegisterNuiCallback(
 							SetEntityDrawOutline(lastOutlinedEntity, false);
 						}
 
-						// Ensure entity exists and is valid before applying outline
 						if (DoesEntityExist(raycast.entity)) {
-							// Set outline color first, then enable outline for better reliability
-							SetEntityDrawOutlineColor(255, 0, 0, 255); // Red outline
+							SetEntityDrawOutlineColor(255, 0, 0, 255);
 							SetEntityDrawOutline(raycast.entity, true);
 
-							// Force shader reload for better outline visibility
 							SetEntityDrawOutlineShader(1);
 							lastOutlinedEntity = raycast.entity;
 						}
@@ -824,7 +810,6 @@ RegisterNuiCallback(
 							}
 						}
 					} else {
-						// Clear outline from previous entity when not targeting anything
 						if (
 							lastOutlinedEntity &&
 							DoesEntityExist(lastOutlinedEntity)
@@ -908,39 +893,37 @@ RegisterNuiCallback(
 	}
 );
 
-RegisterNuiCallback(
-	"deleteDoor",
-	(data: { doorHash: string; doorId: string }, cb: Function) => {
-		const doorData = managedDoors.get(data.doorId);
+RegisterNuiCallback("deleteDoor", (data: { doorId: string }, cb: Function) => {
+	const doorData = managedDoors.get(data.doorId);
 
-		if (doorData) {
-			if (doorData.doorType === "double") {
-				const doorState1 = DoorSystemGetDoorState(data.doorId + "_1");
-				const doorState2 = DoorSystemGetDoorState(data.doorId + "_2");
+	if (doorData) {
+		if (doorData.doorType === "double") {
+			const doorState1 = DoorSystemGetDoorState(data.doorId + "_1");
+			const doorState2 = DoorSystemGetDoorState(data.doorId + "_2");
 
-				if (doorState1 === 1) {
-					DoorSystemSetDoorState(data.doorId + "_1", 0, false, false);
-				}
-				if (doorState2 === 1) {
-					DoorSystemSetDoorState(data.doorId + "_2", 0, false, false);
-				}
-			} else {
-				const doorState = DoorSystemGetDoorState(data.doorHash);
-				if (doorState === 1) {
-					DoorSystemSetDoorState(data.doorHash, 0, false, false);
-				}
+			if (doorState1 === 1 || doorState1 === 4) {
+				DoorSystemSetDoorState(data.doorId + "_1", 0, false, false);
+			}
+			if (doorState2 === 1 || doorState2 === 4) {
+				DoorSystemSetDoorState(data.doorId + "_2", 0, false, false);
 			}
 		} else {
-			const doorState = DoorSystemGetDoorState(data.doorHash);
-			if (doorState === 1) {
-				DoorSystemSetDoorState(data.doorHash, 0, false, false);
+			const doorState = DoorSystemGetDoorState(data.doorId);
+			console.log(`Door state for ${data.doorId}: ${doorState}`);
+			if (doorState === 1 || doorState === 4) {
+				DoorSystemSetDoorState(data.doorId, 0, false, false);
 			}
 		}
-
-		TriggerServerEvent("kbs_doorlock:removeDoor", data.doorId);
-		cb("ok");
+	} else {
+		const doorState = DoorSystemGetDoorState(data.doorId);
+		if (doorState === 1 || doorState === 4) {
+			DoorSystemSetDoorState(data.doorId, 0, false, false);
+		}
 	}
-);
+
+	TriggerServerEvent("kbs_doorlock:removeDoor", data.doorId);
+	cb("ok");
+});
 
 RegisterNuiCallback(
 	"teleportToDoor",
